@@ -836,11 +836,8 @@ stock void EasyHTTP_MarkNatives()
 	MarkNativeAsOptional("curl_easy_setopt_int");
 	MarkNativeAsOptional("curl_easy_setopt_int_array");
 	MarkNativeAsOptional("curl_easy_setopt_int64");
-	MarkNativeAsOptional("curl_OpenFile");
-	MarkNativeAsOptional("curl_httppost");
-	MarkNativeAsOptional("curl_slist");
 	MarkNativeAsOptional("curl_easy_setopt_handle");
-	MarkNativeAsOptional("curl_easy_setopt_functio	n");
+	MarkNativeAsOptional("curl_easy_setopt_function");
 	MarkNativeAsOptional("curl_load_opt");
 	MarkNativeAsOptional("curl_easy_perform");
 	MarkNativeAsOptional("curl_easy_perform_thread");
