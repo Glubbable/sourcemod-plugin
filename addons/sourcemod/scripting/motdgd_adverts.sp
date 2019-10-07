@@ -21,13 +21,13 @@
 
 // ====[ INCLUDES | DEFINES ]============================================================
 #pragma semicolon 1
+#pragma newdecls required
 #include <sourcemod>
 #define CHAT_TAG ""
 #include <zephstocks>
 #include <EasyHTTP>
 #include <EasyJSON>
 #include <motdgd>
-#pragma newdecls required
 
 #define STRING(%1) %1, sizeof(%1)
 
@@ -219,8 +219,7 @@ public void OnPluginStart()
 	}
 
 	GetIP();
-
-	connectHub();
+	CreateSocketToHub();
 }
 
 public void OnPluginEnd() 
@@ -260,7 +259,7 @@ public void OnLibraryAdded(const char[] name)
 	}
 }
 
-public int SteamWorks_SteamServersConnected()
+public void SteamWorks_SteamServersConnected()
 {
 	GetIP();
 }
@@ -485,15 +484,7 @@ public void ConVar_DisableHtmlMotd(QueryCookie hCookie, int iClient, ConVarQuery
 {
 	if (cvResult == ConVarQuery_Okay)
 	{
-		int iValue = StringToInt(sCvarValue);
-		if (iValue == 0)
-		{
-			g_bClientDisabledMotd[iClient] = false;
-		}
-		else
-		{
-			g_bClientDisabledMotd[iClient] = true;
-		}
+		g_bClientDisabledMotd[iClient] = view_as<bool>(StringToInt(sCvarValue));
 	}
 }
 
@@ -793,7 +784,7 @@ stock void ShowMOTDScreen(int client, char[] url, bool hidden)
 stock int GetRealPlayerCount()
 {
 	int players;
-	for (new i = 1; i <= MaxClients; i++)
+	for (int i = 1; i <= MaxClients; i++)
 	{
 		if (IsClientInGame(i) && !IsFakeClient(i))
 			players++;
@@ -803,7 +794,7 @@ stock int GetRealPlayerCount()
 
 stock bool IsValidClient(int i)
 {
-	if (!i || !IsClientInGame(i) || IsClientSourceTV(i) || IsClientReplay(i) || IsFakeClient(i) || !IsClientConnected(i))
+	if (!i || !IsClientInGame(i) || IsFakeClient(i) || IsClientSourceTV(i) || IsClientReplay(i))
 		return false;
 	if (!GetConVarBool(g_immunity))
 		return true;
@@ -890,7 +881,12 @@ public void yeast(char[] out, int maxlen)
 	Format(out, maxlen, "%s.%s", now, seedpp);
 }
 
-Action connectHub(Handle hTimer = INVALID_HANDLE)
+public Action connectHub(Handle hTimer)
+{
+	CreateSocketToHub();
+}
+
+void CreateSocketToHub()
 {
 	hub = SocketCreate(SOCKET_TCP, OnSocketError);
 	SocketConnect(hub, OnSocketConnected, OnSocketReceive, OnSocketDisconnected, "hub.motdgd.com", 80);
@@ -932,7 +928,7 @@ public void OnSocketDisconnected(Handle s, any data)
 		timeoutTimer = INVALID_HANDLE;
 	}
 
-	CreateTimer(reconnectDelay, connectHub);
+	CreateTimer(reconnectDelay, connectHub, _, TIMER_FLAG_NO_MAPCHANGE);
 	reconnectDelay = reconnectDelay > 55.0 ? 60.0 : reconnectDelay + 5.0;
 }
 
@@ -970,9 +966,9 @@ public void OnSocketReceive(Handle socket, char[] receiveData, const int dataSiz
 
 public void handleWebsocket(Handle socket, char[] msg)
 {
-	int FIN = (msg[0] & 0b10000000) >> 7;
+	//int FIN = (msg[0] & 0b10000000) >> 7;
 	int OP = (msg[0] & 0b00001111) >> 0;
-	int MASK = (msg[1] & 0b10000000) >> 7;
+	//int MASK = (msg[1] & 0b10000000) >> 7;
 	int LEN = (msg[1] & 0b01111111) >> 0;
 	int PAYLOAD = 2;
 	if (LEN < 126)
